@@ -3,7 +3,16 @@ namespace SpriteKind {
     export const recipe_items = SpriteKind.create()
     export const plate = SpriteKind.create()
     export const belt = SpriteKind.create()
+    export const pan = SpriteKind.create()
 }
+controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
+    pan_close = spriteutils.getSpritesWithin(SpriteKind.pan, 24, cook)
+    ingredient = sprites.readDataString(item_carrying, "ingredient")
+    if (pan_close.length > 0 && ingredient == "meat") {
+        item_carrying.setImage(assets.image`cooked meat`)
+        sprites.setDataString(item_carrying, "ingredient", "cooked meat")
+    }
+})
 function not_carrying_item () {
     ingredients_close = spriteutils.getSpritesWithin(SpriteKind.Food, 24, cook)
     icon_close = spriteutils.getSpritesWithin(SpriteKind.icon, 24, cook)
@@ -66,6 +75,8 @@ function setup () {
         true
         )
     }
+    tiles.placeOnRandomTile(pan_sprite, assets.tile`counter`)
+    tiles.setTileAt(pan_sprite.tilemapLocation(), assets.tile`corner counter`)
 }
 function carrying_item () {
     belt_close = spriteutils.getSpritesWithin(SpriteKind.belt, 24, cook)
@@ -85,12 +96,12 @@ function carrying_item () {
     }
 }
 function create_order () {
-    recipe = [ingredients[0], ingredients[1]]
+    recipe = [prepared_ingredients[0], prepared_ingredients[1]]
     if (randint(1, 2) == 1) {
-        recipe.push(ingredients[2])
+        recipe.push(prepared_ingredients[2])
     }
     if (randint(1, 2) == 1) {
-        recipe.push(ingredients[3])
+        recipe.push(prepared_ingredients[3])
     }
     plate_sprite = sprites.create(assets.image`plate`, SpriteKind.plate)
     plate_sprite.scale = 1 / 3
@@ -105,13 +116,17 @@ let plate_sprite: Sprite = null
 let item = ""
 let recipe_item: Sprite = null
 let i = 0
-let ingredient = ""
-let item_carrying: Sprite = null
 let icon_close: Sprite[] = []
 let ingredients_close: Sprite[] = []
+let item_carrying: Sprite = null
+let ingredient = ""
+let pan_close: Sprite[] = []
+let prepared_ingredients: string[] = []
 let recipe: string[] = []
 let ingredients: string[] = []
 let cook: Sprite = null
+let pan_sprite: Sprite = null
+pan_sprite = sprites.create(assets.image`pan`, SpriteKind.pan)
 cook = sprites.create(assets.image`cook`, SpriteKind.Player)
 controller.moveSprite(cook)
 scene.centerCameraAt(80, 68)
@@ -123,6 +138,12 @@ ingredients = [
 "tomato"
 ]
 recipe = []
+prepared_ingredients = [
+"cooked meat",
+"bread",
+"lettuce",
+"tomato"
+]
 setup()
 create_order()
 game.onUpdate(function () {
