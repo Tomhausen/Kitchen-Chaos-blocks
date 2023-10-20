@@ -78,6 +78,17 @@ function setup () {
     tiles.placeOnRandomTile(pan_sprite, assets.tile`counter`)
     tiles.setTileAt(pan_sprite.tilemapLocation(), assets.tile`corner counter`)
 }
+function spawn_rat () {
+    rat = sprites.create(assets.image`rat`, SpriteKind.Player)
+    rat.z = -1
+    rat.lifespan = 10000
+    rat.setFlag(SpriteFlag.GhostThroughWalls, true)
+    tiles.placeOnRandomTile(rat, assets.tile`crate`)
+    rat.follow(sprites.allOfKind(SpriteKind.Enemy)[0], 30)
+    timer.after(randint(8000, 15000), function () {
+        spawn_rat()
+    })
+}
 function carrying_item () {
     belt_close = spriteutils.getSpritesWithin(SpriteKind.belt, 24, cook)
     plates_close = spriteutils.getSpritesWithin(SpriteKind.plate, 24, cook)
@@ -95,6 +106,11 @@ function carrying_item () {
         item_carrying = spriteutils.nullConsts(spriteutils.NullConsts.Null)
     }
 }
+sprites.onOverlap(SpriteKind.Enemy, SpriteKind.plate, function (sprite, otherSprite) {
+    sprites.destroyAllSpritesOfKind(SpriteKind.plate)
+    create_order()
+    rat.follow(sprites.allOfKind(SpriteKind.belt)[0], 30)
+})
 function create_order () {
     recipe = [prepared_ingredients[0], prepared_ingredients[1]]
     if (randint(1, 2) == 1) {
@@ -108,8 +124,13 @@ function create_order () {
     tiles.placeOnRandomTile(plate_sprite, assets.tile`counter`)
     display_order()
 }
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
+    sprites.destroy(otherSprite)
+    info.changeScoreBy(300)
+})
 let plates_close: Sprite[] = []
 let belt_close: Sprite[] = []
+let rat: Sprite = null
 let conveyor_belt: Sprite = null
 let icon_sprite: Sprite = null
 let plate_sprite: Sprite = null
@@ -146,6 +167,9 @@ prepared_ingredients = [
 ]
 setup()
 create_order()
+timer.after(randint(8000, 15000), function () {
+    spawn_rat()
+})
 game.onUpdate(function () {
     if (item_carrying) {
         item_carrying.setPosition(cook.x, cook.y + 6)
