@@ -29,6 +29,14 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
         not_carrying_item()
     }
 })
+function make_timer () {
+    timer_bar = statusbars.create(60, 4, StatusBarKind.Energy)
+    timer_bar.left = 5
+    timer_bar.y = 20
+    timer_bar.max = randint(20, 35)
+    timer_bar.value = timer_bar.max
+    timer_bar.setColor(7, 1)
+}
 function get_new_item (crate: Sprite) {
     item_carrying = sprites.create(crate.image, SpriteKind.Food)
     ingredient = sprites.readDataString(crate, "ingredient")
@@ -79,12 +87,12 @@ function setup () {
     tiles.setTileAt(pan_sprite.tilemapLocation(), assets.tile`corner counter`)
 }
 function spawn_rat () {
-    rat = sprites.create(assets.image`rat`, SpriteKind.Player)
+    rat = sprites.create(assets.image`rat`, SpriteKind.Enemy)
     rat.z = -1
     rat.lifespan = 10000
     rat.setFlag(SpriteFlag.GhostThroughWalls, true)
     tiles.placeOnRandomTile(rat, assets.tile`crate`)
-    rat.follow(sprites.allOfKind(SpriteKind.Enemy)[0], 30)
+    rat.follow(sprites.allOfKind(SpriteKind.plate)[0], 30)
     timer.after(randint(8000, 15000), function () {
         spawn_rat()
     })
@@ -106,10 +114,15 @@ function carrying_item () {
         item_carrying = spriteutils.nullConsts(spriteutils.NullConsts.Null)
     }
 }
+statusbars.onZero(StatusBarKind.Energy, function (status) {
+    info.changeScoreBy(-1000)
+    sprites.destroyAllSpritesOfKind(SpriteKind.plate)
+    create_order()
+})
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.plate, function (sprite, otherSprite) {
     sprites.destroyAllSpritesOfKind(SpriteKind.plate)
     create_order()
-    rat.follow(sprites.allOfKind(SpriteKind.belt)[0], 30)
+    sprite.follow(sprites.allOfKind(SpriteKind.belt)[0], 30)
 })
 function create_order () {
     recipe = [prepared_ingredients[0], prepared_ingredients[1]]
@@ -123,6 +136,7 @@ function create_order () {
     plate_sprite.scale = 1 / 3
     tiles.placeOnRandomTile(plate_sprite, assets.tile`counter`)
     display_order()
+    make_timer()
 }
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
     sprites.destroy(otherSprite)
@@ -137,6 +151,7 @@ let plate_sprite: Sprite = null
 let item = ""
 let recipe_item: Sprite = null
 let i = 0
+let timer_bar: StatusBarSprite = null
 let icon_close: Sprite[] = []
 let ingredients_close: Sprite[] = []
 let item_carrying: Sprite = null
@@ -174,5 +189,16 @@ game.onUpdate(function () {
     if (item_carrying) {
         item_carrying.setPosition(cook.x, cook.y + 6)
         item_carrying.z = 5
+    }
+})
+game.onUpdateInterval(1000, function () {
+    timer_bar = statusbars.allOfKind(StatusBarKind.Energy)[0]
+    timer_bar.value += -1
+    if (timer_bar.value < timer_bar.max / 3) {
+        timer_bar.setColor(2, 1)
+    } else if (timer_bar.value > timer_bar.max * 2 / 3) {
+        timer_bar.setColor(7, 1)
+    } else {
+        timer_bar.setColor(5, 1)
     }
 })
